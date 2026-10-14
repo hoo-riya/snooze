@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Sleepy Squad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@400;600;700;800&display=swap">
+</head>
+<body>
+<style>
+/* Layout: one-screen phone app, dawn-sky stage on top, bottom tab bar (Home / Squad / Closet) */
+:root{
+  --bg:#f3eefb; --surface:#ffffff; --surface-2:#f8f5fd; --ink:#2b2540; --muted:#6e6788;
+  --line:#e4dcf3; --accent:#ff7f5c; --accent-ink:#ffffff; --accent-2:#6f5ee8;
+  --good:#2f8f5f; --good-bg:#e3f5eb; --warn:#b8601c; --warn-bg:#fdeedd;
+  --shadow:0 6px 20px rgba(76,56,140,.10);
+  --display:"Fredoka","Baloo 2","Trebuchet MS",system-ui,sans-serif;
+  --body:"Nunito",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141127; --surface:#211c3a; --surface-2:#1a1631; --ink:#f1edff; --muted:#a8a1c9;
+  --line:#352e57; --accent:#ff9374; --accent-ink:#1b1430; --accent-2:#a99dff;
+  --good:#7fd6a5; --good-bg:#1d3a2c; --warn:#f2b07a; --warn-bg:#3d2a1b;
+  --shadow:0 6px 20px rgba(0,0,0,.35); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141127; --surface:#211c3a; --surface-2:#1a1631; --ink:#f1edff; --muted:#a8a1c9;
+  --line:#352e57; --accent:#ff9374; --accent-ink:#1b1430; --accent-2:#a99dff;
+  --good:#7fd6a5; --good-bg:#1d3a2c; --warn:#f2b07a; --warn-bg:#3d2a1b;
+  --shadow:0 6px 20px rgba(0,0,0,.35); color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit}
+.app{max-width:480px;margin:0 auto;padding-inline:16px;padding-block:14px 96px;display:flex;flex-direction:column;gap:14px}
+h1,h2,h3{font-family:var(--display);margin:0;text-wrap:balance;font-weight:600}
+h1{font-size:1.6rem}
+h2{font-size:1.2rem}
+.muted{color:var(--muted)}
+.small{font-size:.85rem}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.mode{font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:16px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px}
+.stage{position:relative;border-radius:26px;overflow:hidden;aspect-ratio:1/0.82;max-width:100%;display:grid;place-items:center;box-shadow:var(--shadow)}
+.stage svg.pet{width:62%;height:auto;position:relative;z-index:1;transition:transform .3s}
+.stage .clock{position:absolute;top:12px;left:16px;font-family:var(--display);font-size:1.05rem;font-weight:600;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.25);font-variant-numeric:tabular-nums;z-index:2}
+.stage .tag{position:absolute;top:12px;right:14px;background:rgba(255,255,255,.85);color:#3a2f5c;font-weight:800;font-size:.75rem;padding:4px 10px;border-radius:99px;z-index:2}
+.z{position:absolute;z-index:3;font-family:var(--display);font-weight:700;font-size:2rem;color:#fff;background:rgba(111,94,232,.75);border:none;width:56px;height:56px;border-radius:50%;cursor:pointer;animation:float 2.4s ease-in-out infinite;box-shadow:0 4px 14px rgba(0,0,0,.2)}
+.z:active{transform:scale(.9)}
+@keyframes float{50%{translate:0 -8px}}
+.bob{animation:bob 3s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-4px) scale(1.01)}}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.stat b{font-family:var(--display);font-size:1.45rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat span{font-size:.75rem;color:var(--muted);font-weight:700;letter-spacing:.03em}
+.big{border:none;border-radius:20px;padding:16px;font-family:var(--display);font-size:1.25rem;font-weight:600;background:var(--accent);color:var(--accent-ink);cursor:pointer;box-shadow:0 6px 0 color-mix(in srgb,var(--accent) 70%,#000);transition:transform .08s}
+.big:active{transform:translateY(3px);box-shadow:0 3px 0 color-mix(in srgb,var(--accent) 70%,#000)}
+.big[disabled]{background:var(--surface-2);color:var(--muted);box-shadow:none;border:1px dashed var(--line);cursor:default;font-size:1.05rem}
+.btn{border:1px solid var(--line);background:var(--surface-2);border-radius:14px;padding:9px 14px;font-weight:700;cursor:pointer}
+.btn.primary{background:var(--accent-2);border-color:var(--accent-2);color:#fff}
+.btn[disabled]{opacity:.5;cursor:default}
+.link{background:none;border:none;color:var(--accent-2);font-weight:700;cursor:pointer;padding:4px;text-decoration:underline;text-underline-offset:3px}
+:focus-visible{outline:3px solid var(--accent-2);outline-offset:2px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+input[type=time],input[type=text]{font:inherit;font-weight:700;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:12px;padding:8px 10px;min-width:0}
+input[type=text]{width:100%}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:99px;padding:3px 10px;font-size:.78rem;font-weight:800}
+.pill.good{background:var(--good-bg);color:var(--good)}
+.pill.warn{background:var(--warn-bg);color:var(--warn)}
+.pill.sleep{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.friend{display:grid;grid-template-columns:56px 1fr auto;gap:12px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.friend:first-of-type{border-top:none}
+.friend .av{width:56px;height:56px;border-radius:16px;overflow:hidden;display:grid;place-items:center}
+.friend .av svg{width:52px;height:52px}
+.friend .nm{font-weight:800;min-width:0;overflow-wrap:anywhere}
+.rank{font-family:var(--display);font-weight:700;width:28px;text-align:center;color:var(--accent-2)}
+.squadrow{display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:center;padding:6px 0}
+.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:center;padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));z-index:20}
+.tabs .in{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;width:100%;max-width:480px}
+.tab{border:none;background:none;border-radius:14px;padding:8px 4px;font-weight:800;font-size:.82rem;color:var(--muted);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tab svg{width:22px;height:22px}
+.tab[aria-selected="true"]{color:var(--accent-2);background:var(--surface-2)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.chip{border:1px solid var(--line);background:var(--surface-2);border-radius:99px;padding:6px 14px;font-weight:800;cursor:pointer;white-space:nowrap}
+.chip[aria-pressed="true"]{background:var(--accent-2);color:#fff;border-color:var(--accent-2)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.item{border:2px solid var(--line);background:var(--surface-2);border-radius:18px;padding:8px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;text-align:center;font-weight:700;font-size:.8rem;min-width:0}
+.item .thumb{width:100%;aspect-ratio:1;border-radius:12px;overflow:hidden;display:grid;place-items:center;background:var(--surface)}
+.item .thumb svg{width:90%;height:90%}
+.item.on{border-color:var(--accent-2)}
+.item .price{color:var(--muted);font-size:.75rem;font-variant-numeric:tabular-nums}
+.item.locked{opacity:.55}
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));translate:-50% 0;background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;font-weight:800;z-index:40;max-width:calc(100% - 32px);text-align:center;transition:opacity .3s}
+.overlay{position:fixed;inset:0;background:var(--bg);z-index:30;overflow-y:auto}
+.notice{background:var(--warn-bg);color:var(--warn);border-radius:16px;padding:10px 14px;font-weight:700;font-size:.85rem}
+.confetti{position:absolute;inset:0;pointer-events:none;z-index:4}
+@media (prefers-reduced-motion: reduce){.z,.bob{animation:none}}
+</style>
+
+<div id="root"></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(() => {
+/* ---------- placeholder art (swap these for Hoo's drawings later) ---------- */
+const PETS = {
+  sheep:{label:"Sheep", fur:"#f7f2ea", face:"#e6d3bd", ear:"#d9c2a7"},
+  bunny:{label:"Bunny", fur:"#f6eef3", face:"#f6eef3", ear:"#f2b8cc"},
+  cat:  {label:"Cat",   fur:"#cfc8dd", face:"#cfc8dd", ear:"#b6add0"},
+  frog: {label:"Frog",  fur:"#a9d99b", face:"#a9d99b", ear:"#8cc47c"},
+  bear: {label:"Bear",  fur:"#c9a27c", face:"#c9a27c", ear:"#a9825f"},
+  duck: {label:"Duck",  fur:"#ffe08a", face:"#ffe08a", ear:"#ffb347"}
+};
+const RARITY = {sheep:"Common", bunny:"Common", cat:"Common", bear:"Uncommon", frog:"Uncommon", duck:"Rare"};
+
+const ITEMS = [
+  // hats
+  {id:"nightcap", slot:"hat",  name:"Nightcap",    cost:0},
+  {id:"beanie",   slot:"hat",  name:"Beanie",      cost:30},
+  {id:"bow",      slot:"hat",  name:"Big bow",     cost:40},
+  {id:"flower",   slot:"hat",  name:"Daisy",       cost:50},
+  {id:"crown",    slot:"hat",  name:"Crown",       cost:150},
+  // eyes
+  {id:"round",    slot:"eyes", name:"Round specs", cost:35},
+  {id:"sunnies",  slot:"eyes", name:"Sunnies",     cost:60},
+  {id:"mask",     slot:"eyes", name:"Sleep mask",  cost:25},
+  // neck
+  {id:"scarf",    slot:"neck", name:"Scarf",       cost:40},
+  {id:"bowtie",   slot:"neck", name:"Bow tie",     cost:45},
+  {id:"bell",     slot:"neck", name:"Bell",        cost:55},
+];
+const WALLS = [
+  {id:"moon",   name:"Moonlit",   unlock:{type:"free"},           bg:"linear-gradient(170deg,#3b2f7a 0%,#6c5bc4 55%,#a99be6 100%)"},
+  {id:"sunrise",name:"Sunrise",   unlock:{type:"streak",n:3},     bg:"linear-gradient(175deg,#ffb38a 0%,#ffd59e 45%,#fff0c9 100%)"},
+  {id:"cloud",  name:"Cloud bed", unlock:{type:"coins",n:60},     bg:"radial-gradient(circle at 30% 80%,#fff 0 18%,transparent 19%),radial-gradient(circle at 70% 85%,#fff 0 22%,transparent 23%),linear-gradient(180deg,#9fd3ff 0%,#d8eeff 100%)"},
+  {id:"stars",  name:"Starfield", unlock:{type:"streak",n:7},     bg:"radial-gradient(circle at 20% 20%,#fff 0 1.2%,transparent 1.6%),radial-gradient(circle at 75% 30%,#fff 0 1%,transparent 1.4%),radial-gradient(circle at 55% 12%,#fff 0 .8%,transparent 1.2%),radial-gradient(circle at 85% 70%,#fff 0 1%,transparent 1.4%),linear-gradient(180deg,#0f1238 0%,#2b2470 100%)"},
+  {id:"meadow", name:"Meadow",    unlock:{type:"coins",n:100},    bg:"linear-gradient(180deg,#bfe7ff 0%,#e9f7ff 55%,#9edc8f 56%,#7cc56d 100%)"},
+  {id:"aurora", name:"Aurora",    unlock:{type:"streak",n:14},    bg:"linear-gradient(160deg,#0d2a3a 0%,#1d6a6a 40%,#7be0b5 70%,#c9a7ff 100%)"},
+];
+
+function hatSVG(id){
+  switch(id){
+    case "nightcap": return `<path d="M58 62 Q100 18 142 60 Q120 40 168 26 Q150 50 142 62 Z" fill="#7b6cf0"/><circle cx="168" cy="26" r="9" fill="#fff"/><rect x="54" y="56" width="92" height="12" rx="6" fill="#fff"/>`;
+    case "beanie": return `<path d="M60 64 Q100 6 140 64 Z" fill="#ff8a65"/><rect x="56" y="58" width="88" height="14" rx="7" fill="#e86a45"/><circle cx="100" cy="22" r="9" fill="#ffd0c0"/>`;
+    case "bow": return `<path d="M100 50 L70 34 L72 66 Z M100 50 L130 34 L128 66 Z" fill="#ff7aa8"/><circle cx="100" cy="50" r="8" fill="#e85a8c"/>`;
+    case "flower": return `<g transform="translate(128 48)">${[0,72,144,216,288].map(a=>`<ellipse rx="7" ry="13" transform="rotate(${a}) translate(0 -11)" fill="#fff"/>`).join("")}<circle r="7" fill="#ffc93c"/></g>`;
+    case "crown": return `<path d="M68 62 L72 30 L88 46 L100 24 L112 46 L128 30 L132 62 Z" fill="#ffc93c" stroke="#e0a400" stroke-width="2"/><circle cx="100" cy="50" r="4" fill="#ff6b8a"/>`;
+  } return "";
+}
+function eyesSVG(id){
+  switch(id){
+    case "round": return `<g fill="none" stroke="#3a2f5c" stroke-width="3"><circle cx="84" cy="92" r="11"/><circle cx="116" cy="92" r="11"/><path d="M95 92 H105"/></g>`;
+    case "sunnies": return `<g fill="#2b2540"><rect x="70" y="84" width="26" height="16" rx="6"/><rect x="104" y="84" width="26" height="16" rx="6"/><rect x="94" y="88" width="12" height="3"/></g>`;
+    case "mask": return `<path d="M64 84 Q100 76 136 84 L134 100 Q100 108 66 100 Z" fill="#9b8cf5"/><text x="100" y="97" font-size="10" text-anchor="middle" fill="#fff" font-family="sans-serif" font-weight="700">zzz</text>`;
+  } return "";
+}
+function neckSVG(id){
+  switch(id){
+    case "scarf": return `<path d="M62 124 Q100 140 138 124 L138 136 Q100 152 62 136 Z" fill="#ff8a65"/><rect x="118" y="132" width="14" height="28" rx="5" fill="#e86a45"/>`;
+    case "bowtie": return `<path d="M100 132 L84 122 L84 142 Z M100 132 L116 122 L116 142 Z" fill="#6f5ee8"/><circle cx="100" cy="132" r="5" fill="#4d3fc0"/>`;
+    case "bell": return `<path d="M68 126 Q100 136 132 126" stroke="#e85a8c" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="100" cy="138" r="9" fill="#ffc93c" stroke="#e0a400" stroke-width="2"/>`;
+  } return "";
+}
+
+function petSVG(kind, o = {}, awake = false){
+  const p = PETS[kind] || PETS.sheep;
+  let ears = "", extra = "", headFill = p.face;
+  if(kind==="sheep"){
+    ears = `<ellipse cx="54" cy="84" rx="16" ry="8" fill="${p.ear}"/><ellipse cx="146" cy="84" rx="16" ry="8" fill="${p.ear}"/>`;
+    extra = [[68,58],[86,48],[104,46],[122,50],[136,62],[62,74],[140,78]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="15" fill="${p.fur}"/>`).join("");
+  } else if(kind==="bunny"){
+    ears = `<ellipse cx="80" cy="34" rx="12" ry="34" fill="${p.fur}"/><ellipse cx="80" cy="36" rx="6" ry="26" fill="${p.ear}"/><ellipse cx="120" cy="34" rx="12" ry="34" fill="${p.fur}"/><ellipse cx="120" cy="36" rx="6" ry="26" fill="${p.ear}"/>`;
+  } else if(kind==="cat"){
+    ears = `<path d="M64 70 L70 34 L94 56 Z" fill="${p.fur}"/><path d="M136 70 L130 34 L106 56 Z" fill="${p.fur}"/><path d="M70 62 L73 44 L86 56 Z" fill="#f2b8cc"/><path d="M130 62 L127 44 L114 56 Z" fill="#f2b8cc"/>`;
+    extra = `<g stroke="#8e86a8" stroke-width="2" stroke-linecap="round"><path d="M62 106 H44"/><path d="M62 112 L46 118"/><path d="M138 106 H156"/><path d="M138 112 L154 118"/></g>`;
+  } else if(kind==="frog"){
+    ears = `<circle cx="76" cy="56" r="17" fill="${p.fur}"/><circle cx="124" cy="56" r="17" fill="${p.fur}"/>`;
+  } else if(kind==="bear"){
+    ears = `<circle cx="66" cy="58" r="15" fill="${p.fur}"/><circle cx="66" cy="58" r="8" fill="${p.ear}"/><circle cx="134" cy="58" r="15" fill="${p.fur}"/><circle cx="134" cy="58" r="8" fill="${p.ear}"/>`;
+    extra = `<ellipse cx="100" cy="112" rx="18" ry="12" fill="#e8cfb3"/>`;
+  } else if(kind==="duck"){
+    ears = `<path d="M96 50 Q92 30 104 34 Q98 40 104 50 Z" fill="${p.fur}"/>`;
+  }
+  const eyeY = kind==="frog" ? 56 : 92;
+  const eyeX = kind==="frog" ? [76,124] : [84,116];
+  const eyes = awake
+    ? eyeX.map(x=>`<circle cx="${x}" cy="${eyeY}" r="5.5" fill="#2b2540"/><circle cx="${x+2}" cy="${eyeY-2}" r="1.8" fill="#fff"/>`).join("")
+    : eyeX.map(x=>`<path d="M${x-7} ${eyeY} Q${x} ${eyeY+6} ${x+7} ${eyeY}" stroke="#2b2540" stroke-width="3" fill="none" stroke-linecap="round"/>`).join("");
+  const mouth = kind==="duck"
+    ? `<ellipse cx="100" cy="112" rx="15" ry="7" fill="#ff9f43"/>`
+    : (awake ? `<path d="M93 110 Q100 118 107 110" stroke="#2b2540" stroke-width="3" fill="none" stroke-linecap="round"/>`
+             : `<ellipse cx="100" cy="112" rx="4" ry="3" fill="#2b2540"/>`);
+  const eyeItem = (o.eyes && !(o.eyes==="mask" && awake)) ? eyesSVG(o.eyes) : "";
+  return `<svg class="pet" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${p.label}${awake?" awake":" asleep"}">
+    <ellipse cx="100" cy="186" rx="58" ry="8" fill="rgba(0,0,0,.12)"/>
+    <ellipse cx="100" cy="150" rx="56" ry="40" fill="${p.fur}"/>
+    ${kind==="sheep" ? [[58,140],[76,124],[124,124],[142,140],[100,120]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="16" fill="${p.fur}"/>`).join("") : ""}
+    <ellipse cx="74" cy="182" rx="12" ry="7" fill="${p.ear}"/><ellipse cx="126" cy="182" rx="12" ry="7" fill="${p.ear}"/>
+    ${ears}
+    ${kind==="sheep" ? "" : ""}
+    <circle cx="100" cy="94" r="42" fill="${headFill}"/>
+    ${kind==="sheep" ? extra : ""}
+    ${kind!=="sheep" ? extra : ""}
+    ${eyes}
+    <ellipse cx="74" cy="106" rx="8" ry="5" fill="#ff9fb4" opacity=".7"/><ellipse cx="126" cy="106" rx="8" ry="5" fill="#ff9fb4" opacity=".7"/>
+    ${mouth}
+    ${neckSVG(o.neck)}
+    ${eyeItem}
+    ${hatSVG(o.hat)}
+  </svg>`;
+}
+
+/* ---------- time helpers ---------- */
+const pad = n => String(n).padStart(2,"0");
+const dateKey = (d=new Date()) => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const dayDiff = (a,b) => Math.round((new Date(b+"T12:00:00") - new Date(a+"T12:00:00"))/86400000);
+const toMin = t => { const [h,m] = (t||"07:00").split(":").map(Number); return h*60+m; };
+const nowMin = () => { const d=new Date(); return d.getHours()*60+d.getMinutes(); };
+const fmt = min => { min=((min%1440)+1440)%1440; let h=Math.floor(min/60), m=min%60; const ap=h<12?"am":"pm"; h=h%12||12; return `${h}:${pad(m)} ${ap}`; };
+const fmtTs = ts => { const d=new Date(ts); return fmt(d.getHours()*60+d.getMinutes()); };
+const EARLY = 30, LATE = 15;
+const inWindow = goal => { const n=nowMin(), g=toMin(goal); return n>=g-EARLY && n<=g+LATE; };
+const pastWindow = goal => nowMin() > toMin(goal)+LATE;
+
+/* ---------- state ---------- */
+let db=null, uid=null, mode="loading", me=null, players={}, squad={time:"07:30"};
+let tab="home", closetSlot="hat", game=null, saving=false;
+const LS = "sleepy-squad-me";
+
+function blankMe(){
+  return {nick:"", pet:null, goal:"07:00", streak:0, best:0, coins:20, freezes:0,
+          last:null, wokeDate:null, wokeAt:null, squadDate:null, squadAt:null,
+          owned:["nightcap"], walls:["moon"], hat:"nightcap", eyes:null, neck:null, wall:"moon"};
+}
+function effectiveStreak(p){
+  if(!p.last) return 0;
+  const gap = dayDiff(p.last, dateKey());
+  if(gap<=1) return p.streak;
+  if(gap-1 <= (p.freezes||0)) return p.streak;
+  return 0;
+}
+
+async function save(){
+  if(!me) return;
+  if(mode==="shared"){
+    saving=true;
+    try{ await db.doc("players/"+uid).set(me); }
+    catch(e){
+      if(e && e.code==="invalid_argument"){ mode="local"; toast("You can't save to the shared squad on this link. Playing solo for now."); }
+      else toast("Couldn't save just now. Try again in a moment.");
+    } finally { saving=false; }
+  }
+  try{ localStorage.setItem(LS, JSON.stringify(me)); }catch(e){}
+}
+
+/* ---------- ui helpers ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let toastT;
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true,2600); }
+const wallBg = id => (WALLS.find(w=>w.id===id)||WALLS[0]).bg;
+
+/* ---------- render ---------- */
+function render(){
+  const root = $("#root");
+  if(mode==="loading"){ root.innerHTML = `<div class="app"><h1>Sleepy Squad</h1><p class="muted">Waking up the app…</p></div>`; return; }
+  if(!me || !me.pet){ renderOnboard(root); return; }
+  let body = tab==="home" ? homeHTML() : tab==="squad" ? squadHTML() : closetHTML();
+  root.innerHTML = `<div class="app">${body}</div>${tabsHTML()}`;
+  wire();
+}
+
+function tabsHTML(){
+  const ic = {
+    home:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3a6 6 0 1 0 9 7.5A7 7 0 1 1 12 3z"/></svg>`,
+    squad:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="9" r="3"/><circle cx="16" cy="9" r="3"/><path d="M3 19c1-3 3-4 5-4s4 1 5 4M11 19c1-3 3-4 5-4s4 1 5 4"/></svg>`,
+    closet:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 4l4 2 4-2 5 4-3 3-2-1v10H8V10l-2 1-3-3z"/></svg>`
+  };
+  const t = (id,label) => `<button class="tab" role="tab" aria-selected="${tab===id}" data-tab="${id}">${ic[id]}${label}</button>`;
+  return `<nav class="tabs"><div class="in" role="tablist">${t("home","Home")}${t("squad","Squad")}${t("closet","Closet")}</div></nav>`;
+}
+
+function homeHTML(){
+  const today = dateKey();
+  const doneMe = me.wokeDate===today;
+  const doneSquad = me.squadDate===today;
+  const persOpen = inWindow(me.goal) && !doneMe;
+  const sqOpen = mode==="shared" && inWindow(squad.time) && !doneSquad;
+  const awake = doneMe || game?.won;
+  const st = effectiveStreak(me);
+  const risk = me.last && dayDiff(me.last,today)>1 && st>0;
+  let btn, sub;
+  if(game){ btn = `<button class="big" disabled>Pop all the Zs!</button>`; sub = `Tap the floating Zs to prove you're really up.`; }
+  else if(persOpen || sqOpen){
+    btn = `<button class="big" id="wake">I'm awake!</button>`;
+    sub = persOpen && sqOpen ? `Counts for your streak and the squad wake-up.` : persOpen ? `Your window is open until ${fmt(toMin(me.goal)+LATE)}.` : `Squad wake-up is on. Show them you're up!`;
+  } else if(doneMe){
+    btn = `<button class="big" disabled>Up at ${fmtTs(me.wokeAt)}. See you tomorrow!</button>`;
+    sub = `Next wake-up window opens at ${fmt(toMin(me.goal)-EARLY)}.`;
+  } else {
+    const missed = pastWindow(me.goal);
+    btn = `<button class="big" disabled>${missed ? "You missed today's window" : "Window opens at "+fmt(toMin(me.goal)-EARLY)}</button>`;
+    sub = missed ? `Tomorrow's window: ${fmt(toMin(me.goal)-EARLY)} – ${fmt(toMin(me.goal)+LATE)}.` : `You can check in from 30 min before your goal until 15 min after.`;
+  }
+  const d = new Date();
+  const zs = game ? game.zs.map(z=>z.popped?"":`<button class="z" data-z="${z.i}" style="left:${z.x}%;top:${z.y}%;animation-delay:${z.i*.3}s" aria-label="Pop Z">Z</button>`).join("") : "";
+  return `
+    <div class="top">
+      <div><div class="mode">${mode==="shared"?"Squad mode":"Solo mode"}</div><h1>${awake?"Good morning":"Sleepy"}, ${esc(me.nick)}</h1></div>
+    </div>
+    ${mode==="local" ? `<div class="notice">Your friends can't see you on this link yet, so progress is saved on this phone only.</div>` : ""}
+    <div class="stage" style="background:${wallBg(me.wall)}">
+      <div class="clock">${fmt(d.getHours()*60+d.getMinutes())}</div>
+      <div class="tag">Goal ${fmt(toMin(me.goal))}</div>
+      <div class="bob" style="width:100%;display:grid;place-items:center">${petSVG(me.pet, me, awake)}</div>
+      ${zs}
+      <canvas class="confetti" id="confetti"></canvas>
+    </div>
+    ${btn}
+    <p class="muted small" style="margin:0;text-align:center">${sub}</p>
+    <div class="stats">
+      <div class="stat"><b>${st}</b><span>DAY STREAK${risk?" · FROZEN":""}</span></div>
+      <div class="stat"><b>${me.coins}</b><span>COINS</span></div>
+      <div class="stat"><b>${me.freezes}</b><span>STREAK FREEZES</span></div>
+    </div>
+    <div class="card">
+      <div class="row"><h2>Wake-up goal</h2><input type="time" id="goal" value="${esc(me.goal)}" aria-label="Wake-up goal"></div>
+      <div class="row"><div><b>Streak freeze</b><div class="muted small">Saves your streak if you miss a day. Max 2.</div></div>
+        <button class="btn" id="buyFreeze" ${me.coins<50||me.freezes>=2?"disabled":""}>Buy · 50</button></div>
+      <div class="row"><span class="muted small">Best streak: ${me.best} days</span><button class="link" id="practice" ${game?"disabled":""}>Practice wake-up</button></div>
+    </div>`;
+}
+
+function statusPill(p){
+  const today=dateKey();
+  if(p.wokeDate===today) return `<span class="pill good">Up at ${fmtTs(p.wokeAt)}</span>`;
+  if(pastWindow(p.goal)) return `<span class="pill warn">Overslept</span>`;
+  return `<span class="pill sleep">Zzz until ${fmt(toMin(p.goal))}</span>`;
+}
+
+function squadHTML(){
+  const today=dateKey();
+  const list = Object.entries(players).filter(([,p])=>p && p.pet);
+  if(mode!=="shared") list.splice(0, list.length, [uid||"me", me]);
+  const up = list.filter(([,p])=>p.squadDate===today).sort((a,b)=>a[1].squadAt-b[1].squadAt);
+  const sqPast = pastWindow(squad.time);
+  const snoozers = list.filter(([,p])=>p.squadDate!==today);
+  const rows = up.map(([id,p],i)=>`<div class="squadrow"><span class="rank">${i+1}</span><span><b>${esc(p.nick)}</b>${i===0?` <span class="pill good">First up</span>`:""}</span><span class="small muted" style="font-variant-numeric:tabular-nums">${fmtTs(p.squadAt)}</span></div>`).join("");
+  const sl = snoozers.map(([id,p])=>`<div class="squadrow"><span class="rank">–</span><span><b>${esc(p.nick)}</b> ${sqPast?`<span class="pill warn">Sleepyhead</span>`:""}</span><span class="small muted">${sqPast?"missed":"zzz"}</span></div>`).join("");
+  const friends = list.sort((a,b)=>effectiveStreak(b[1])-effectiveStreak(a[1])).map(([id,p])=>`
+    <div class="friend">
+      <div class="av" style="background:${wallBg(p.wall)}">${petSVG(p.pet,p,p.wokeDate===today)}</div>
+      <div style="min-width:0"><div class="nm">${esc(p.nick)}${id===uid?` <span class="muted small">(you)</span>`:""}</div>
+        <div class="small muted">${effectiveStreak(p)}-day streak · ${(PETS[p.pet]||{}).label||""}</div></div>
+      ${statusPill(p)}
+    </div>`).join("");
+  return `
+    <div><div class="mode">Squad</div><h1>Who's up?</h1></div>
+    ${mode!=="shared" ? `<div class="notice">Squad features need the shared link with editing access. Right now only you are here.</div>`:""}
+    <div class="card">
+      <div class="row"><div><h2>Squad wake-up</h2><div class="muted small">Everyone tries to check in at the same time. Last one up is the Sleepyhead.</div></div></div>
+      <div class="row"><label for="sqt" class="small muted"><b>Today's squad time</b></label>
+        <span style="display:flex;gap:8px"><input type="time" id="sqt" value="${esc(squad.time)}"><button class="btn primary" id="setSq" ${mode!=="shared"?"disabled":""}>Set</button></span></div>
+      <div>${rows || `<p class="muted small" style="margin:0">Nobody's checked in for the squad yet today.</p>`}${sl}</div>
+    </div>
+    <div class="card"><h2>Friends</h2><div>${friends || `<p class="muted">No friends yet. Share the link!</p>`}</div></div>`;
+}
+
+function isUnlocked(w){
+  if(me.walls.includes(w.id)) return true;
+  if(w.unlock.type==="streak") return me.best>=w.unlock.n;
+  return false;
+}
+
+function closetHTML(){
+  const slots = [["hat","Hats"],["eyes","Eyes"],["neck","Neck"],["wall","Wallpapers"]];
+  let grid;
+  if(closetSlot==="wall"){
+    grid = WALLS.map(w=>{
+      const owned = isUnlocked(w), on = me.wall===w.id;
+      const price = owned ? (on?"Wearing":"Owned") : w.unlock.type==="streak" ? `${w.unlock.n}-day streak` : `${w.unlock.n} coins`;
+      return `<button class="item ${on?"on":""} ${!owned && w.unlock.type==="streak"?"locked":""}" data-wall="${w.id}"><div class="thumb" style="background:${w.bg}"></div>${esc(w.name)}<span class="price">${price}</span></button>`;
+    }).join("");
+  } else {
+    grid = `<button class="item ${!me[closetSlot]?"on":""}" data-item="none"><div class="thumb">${petSVG(me.pet,{...me,[closetSlot]:null},true)}</div>None<span class="price">&nbsp;</span></button>` +
+      ITEMS.filter(i=>i.slot===closetSlot).map(i=>{
+        const owned = me.owned.includes(i.id), on = me[closetSlot]===i.id;
+        return `<button class="item ${on?"on":""}" data-item="${i.id}"><div class="thumb">${petSVG(me.pet,{...me,[closetSlot]:i.id},true)}</div>${esc(i.name)}<span class="price">${owned?(on?"Wearing":"Owned"):i.cost+" coins"}</span></button>`;
+      }).join("");
+  }
+  return `
+    <div class="row"><div><div class="mode">Closet</div><h1>Dress up your ${(PETS[me.pet]||{}).label.toLowerCase()}</h1></div><span class="pill good">${me.coins} coins</span></div>
+    <div class="stage" style="background:${wallBg(me.wall)};aspect-ratio:1/0.7">${petSVG(me.pet,me,true)}</div>
+    <div class="chips" role="group" aria-label="Category">${slots.map(([s,l])=>`<button class="chip" aria-pressed="${closetSlot===s}" data-slot="${s}">${l}</button>`).join("")}</div>
+    <div class="grid">${grid}</div>
+    <p class="muted small" style="margin:0">Earn coins by waking up on time: 10 per check-in, more as your streak grows, plus 5 for being early.</p>`;
+}
+
+/* ---------- onboarding: name, goal, roll a pet ---------- */
+let rollState = {pet:null, rolling:false};
+function renderOnboard(root){
+  const p = rollState.pet;
+  root.innerHTML = `<div class="overlay"><div class="app" style="padding-bottom:40px">
+    <div><div class="mode">Welcome to</div><h1 style="font-size:2rem">Sleepy Squad</h1>
+    <p class="muted" style="margin:.3rem 0 0">Wake up on time, keep your streak, and dress up your sleepy pet. Your friends see who's up.</p></div>
+    ${mode==="local" ? `<div class="notice">Playing solo on this phone. To join your friends, open the link they shared with editing access.</div>`:""}
+    <div class="card">
+      <label for="nick"><b>Your name</b></label>
+      <input type="text" id="nick" maxlength="20" placeholder="e.g. Hoo" value="${esc(me?.nick||"")}">
+      <div class="row"><label for="g0"><b>Wake-up goal</b></label><input type="time" id="g0" value="${esc(me?.goal||"07:00")}"></div>
+    </div>
+    <div class="stage" style="background:${wallBg("moon")}">
+      ${p ? `<div class="bob" style="width:100%;display:grid;place-items:center">${petSVG(p,{hat:"nightcap"},!rollState.rolling)}</div>
+             <div class="tag">${rollState.rolling?"Rolling…":PETS[p].label+" · "+RARITY[p]}</div>`
+          : `<p style="color:#fff;font-family:var(--display);font-size:1.3rem;text-align:center;padding:0 20px">Who will your sleepy pet be?</p>`}
+    </div>
+    ${!p || rollState.rolling ? `<button class="big" id="roll" ${rollState.rolling?"disabled":""}>${rollState.rolling?"Rolling…":"Roll my pet"}</button>`
+       : `<button class="big" id="start">Start with my ${PETS[p].label.toLowerCase()}</button>`}
+  </div></div>`;
+  $("#roll")?.addEventListener("click", rollPet);
+  $("#start")?.addEventListener("click", async ()=>{
+    const nick = $("#nick").value.trim();
+    if(!nick){ toast("Add your name so friends know it's you."); $("#nick").focus(); return; }
+    me = {...blankMe(), ...(me||{}), nick, goal:$("#g0").value||"07:00", pet:rollState.pet};
+    await save(); render();
+  });
+}
+function rollPet(){
+  const nickV = $("#nick").value, goalV = $("#g0").value;
+  me = {...(me||blankMe()), nick:nickV, goal:goalV};
+  const pool = ["sheep","sheep","bunny","bunny","cat","cat","bear","frog","duck"];
+  rollState.rolling = true; let n=0;
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const spin = () => {
+    rollState.pet = Object.keys(PETS)[n%6]; n++;
+    renderOnboard($("#root"));
+    if(n < (reduce?1:14)) setTimeout(spin, 60+n*12);
+    else { rollState.pet = pool[Math.floor(Math.random()*pool.length)]; rollState.rolling=false; renderOnboard($("#root")); }
+  };
+  spin();
+}
+
+/* ---------- wake-up mini game ---------- */
+function startGame(practice){
+  const spots = [[12,22],[70,18],[20,62],[72,58],[44,40]];
+  game = {practice, won:false, zs:spots.map(([x,y],i)=>({i,x,y,popped:false}))};
+  render();
+}
+function popZ(i){
+  if(!game) return;
+  game.zs[i].popped = true;
+  if(game.zs.every(z=>z.popped)) finishGame(); else render();
+}
+async function finishGame(){
+  const practice = game.practice;
+  game.won = true;
+  if(practice){ render(); burst(); toast("Practice done! The real one counts during your window."); setTimeout(()=>{game=null;render();},1800); return; }
+  const today=dateKey(), msgs=[];
+  if(inWindow(me.goal) && me.wokeDate!==today){
+    let s;
+    if(!me.last) s=1;
+    else {
+      const gap = dayDiff(me.last,today);
+      if(gap<=1) s=me.streak+1;
+      else if(gap-1 <= me.freezes){ me.freezes -= gap-1; s=me.streak+1; msgs.push(`Used ${gap-1} streak freeze${gap>2?"s":""}`); }
+      else s=1;
+    }
+    me.streak=s; me.best=Math.max(me.best,s); me.last=today; me.wokeDate=today; me.wokeAt=Date.now();
+    const early = nowMin() < toMin(me.goal);
+    const earned = 10 + Math.min(s,10)*2 + (early?5:0);
+    me.coins += earned; msgs.unshift(`+${earned} coins · ${s}-day streak`);
+    WALLS.filter(w=>w.unlock.type==="streak" && me.best>=w.unlock.n && !me.walls.includes(w.id)).forEach(w=>{me.walls.push(w.id); msgs.push(`Unlocked ${w.name} wallpaper`);});
+  }
+  if(mode==="shared" && inWindow(squad.time) && me.squadDate!==today){
+    me.squadDate=today; me.squadAt=Date.now(); me.coins+=5; msgs.push("+5 squad bonus");
+  }
+  render(); burst(); toast(msgs.join(" · ") || "Good morning!");
+  await save();
+  setTimeout(()=>{game=null;render();},1800);
+}
+function burst(){
+  const c = $("#confetti"); if(!c || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const r = c.getBoundingClientRect(); c.width=r.width; c.height=r.height;
+  const ctx=c.getContext("2d"), cols=["#ff7f5c","#ffc93c","#6f5ee8","#7fd6a5","#ff9fb4"];
+  const parts=[...Array(60)].map(()=>({x:r.width/2,y:r.height/2,vx:(Math.random()-.5)*9,vy:Math.random()*-9-2,c:cols[Math.random()*5|0],s:4+Math.random()*5}));
+  let f=0; (function tick(){ ctx.clearRect(0,0,c.width,c.height);
+    parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.35;ctx.fillStyle=p.c;ctx.fillRect(p.x,p.y,p.s,p.s);});
+    if(++f<70) requestAnimationFrame(tick); else ctx.clearRect(0,0,c.width,c.height); })();
+}
+
+/* ---------- wiring ---------- */
+function wire(){
+  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{tab=b.dataset.tab; render(); scrollTo(0,0);});
+  $("#wake") && ($("#wake").onclick=()=>startGame(false));
+  $("#practice") && ($("#practice").onclick=()=>startGame(true));
+  document.querySelectorAll("[data-z]").forEach(b=>b.onclick=()=>popZ(+b.dataset.z));
+  $("#goal") && ($("#goal").onchange=async e=>{ if(!e.target.value) return; me.goal=e.target.value; render(); await save(); toast(`Goal set to ${fmt(toMin(me.goal))}`); });
+  $("#buyFreeze") && ($("#buyFreeze").onclick=async()=>{ if(me.coins<50||me.freezes>=2) return; me.coins-=50; me.freezes++; render(); await save(); toast("Streak freeze ready"); });
+  $("#setSq") && ($("#setSq").onclick=async()=>{
+    const v=$("#sqt").value; if(!v||mode!=="shared") return;
+    try{ await db.doc("squad/main").set({time:v}); squad.time=v; toast(`Squad wake-up set for ${fmt(toMin(v))}`); }
+    catch(e){ toast("Couldn't change the squad time on this link."); }
+    render();
+  });
+  document.querySelectorAll("[data-slot]").forEach(b=>b.onclick=()=>{closetSlot=b.dataset.slot; render();});
+  document.querySelectorAll("[data-item]").forEach(b=>b.onclick=async()=>{
+    const id=b.dataset.item;
+    if(id==="none"){ me[closetSlot]=null; render(); await save(); return; }
+    const it=ITEMS.find(i=>i.id===id);
+    if(!me.owned.includes(id)){
+      if(me.coins<it.cost){ toast(`You need ${it.cost-me.coins} more coins for the ${it.name.toLowerCase()}.`); return; }
+      me.coins-=it.cost; me.owned.push(id); toast(`Bought the ${it.name.toLowerCase()}!`);
+    }
+    me[it.slot]=id; render(); await save();
+  });
+  document.querySelectorAll("[data-wall]").forEach(b=>b.onclick=async()=>{
+    const w=WALLS.find(x=>x.id===b.dataset.wall);
+    if(!isUnlocked(w)){
+      if(w.unlock.type==="streak"){ toast(`Reach a ${w.unlock.n}-day streak to unlock ${w.name}.`); return; }
+      if(me.coins<w.unlock.n){ toast(`You need ${w.unlock.n-me.coins} more coins for ${w.name}.`); return; }
+      me.coins-=w.unlock.n; me.walls.push(w.id); toast(`Unlocked ${w.name}!`);
+    }
+    me.wall=w.id; render(); await save();
+  });
+}
+
+/* ---------- boot ---------- */
+function loadLocal(){ try{ const s=localStorage.getItem(LS); if(s) return {...blankMe(), ...JSON.parse(s)}; }catch(e){} return null; }
+
+async function boot(){
+  render();
+  let user=null;
+  try{
+    [db, user] = await Promise.all([window.claude?.use?.("db") ?? null, window.claude?.use?.("user") ?? null]);
+    uid = user ? await user.id() : null;
+  }catch(e){ db=null; }
+  if(db && uid){
+    mode="shared";
+    let first=true;
+    db.collection("players").onSnapshot(snap=>{
+      const next={}; snap.docs.forEach(d=>{ if(d.exists) next[d.id]=d.data(); });
+      players=next;
+      if(first){
+        first=false;
+        if(players[uid]) me = {...blankMe(), ...JSON.parse(JSON.stringify(players[uid]))};
+        else { const l = loadLocal(); me = l && l.pet ? l : null; if(me) save(); }
+      } else if(players[uid] && !saving && !game){
+        me = {...blankMe(), ...JSON.parse(JSON.stringify(players[uid]))};
+      }
+      if(!game) render();
+    }, ()=>{ mode="local"; me=me||loadLocal(); render(); });
+    db.doc("squad/main").onSnapshot(s=>{ if(s.exists && s.data().time){ squad.time=s.data().time; if(!game && tab==="squad") render(); } });
+  } else {
+    mode="local"; me=loadLocal(); render();
+  }
+}
+setInterval(()=>{ if(!game && mode!=="loading" && me && me.pet && tab!=="closet" && !document.activeElement?.matches("input")) render(); }, 30000);
+if(window.claude?.use) boot(); else { mode="local"; me=loadLocal(); render(); }
+})();
+</script>
+
+</body>
+</html>
